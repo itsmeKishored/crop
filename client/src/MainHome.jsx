@@ -1,3 +1,5 @@
+
+
 // src/MainHome.jsx
 import React, { useState, useRef } from 'react';
 import Webcam from 'react-webcam';
@@ -7,6 +9,7 @@ const MainHome = () => {
   const [imageUploaded, setImageUploaded] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [processedImage, setProcessedImage] = useState(null);  // State to store processed image
   const webcamRef = useRef(null);
 
   const handleScanClick = () => {
@@ -23,6 +26,7 @@ const MainHome = () => {
   const handleDiscard = () => {
     setCapturedImage(null);
     setImageUploaded(false);
+    setProcessedImage(null);  // Clear the processed image
   };
 
   const handleUploadChange = (event) => {
@@ -34,11 +38,22 @@ const MainHome = () => {
     }
   };
 
-  const handleFindDiseaseClick = () => {
-    console.log("Finding disease...");
-    // Show toast message
-    alert("Image successfully uploaded for disease detection.");
-    // Add further logic for disease prediction
+  const handleFindDiseaseClick = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: capturedImage }),
+      });
+      const data = await response.json();
+      setProcessedImage(`data:image/jpeg;base64,${data.processed_image}`);  // Set the processed image
+      alert("Image successfully uploaded for disease detection.");
+    } catch (error) {
+      console.error("Error predicting disease:", error);
+      alert("An error occurred while predicting disease.");
+    }
   };
 
   return (
@@ -83,6 +98,12 @@ const MainHome = () => {
               Discard
             </button>
           </div>
+        </div>
+      )}
+      {processedImage && (
+        <div className="processed-image-container">
+          <h3>Processed Image:</h3>
+          <img src={processedImage} alt="Processed Crop" />
         </div>
       )}
     </div>
